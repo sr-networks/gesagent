@@ -1,4 +1,4 @@
-# Customer Service Bot v1.0
+# Customer Service Bot v0.1
 
 > 🤖 An intelligent customer service chatbot with MCP (Model Context Protocol) integration for accessing business data and providing automated support.
 
@@ -126,7 +126,7 @@ npm run dev
 curl -fsSL https://ollama.com/install.sh | sh
 
 # Pull a model
-ollama pull qwen2.5:8b
+ollama pull qwen3:8b
 
 # Model will be available at localhost:11434
 ```
