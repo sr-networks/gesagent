@@ -1,0 +1,6 @@
+job_id,date,customer_id,vin,service,status,cost
+J1001,2025-07-01,C001,1HGBH41JXMN109186,Oil Change,Completed,89.99
+J1002,2025-07-02,C002,WBA3A5C5XDF123456,Brake Pad Replacement,Completed,349.5
+J1003,2025-07-03,C003,1FTFW1ET1EKF54321,Battery Replacement,Completed,199
+J1004,2025-07-04,C004,3VWDP7AJ5DM123789,Tire Rotation,Completed,49
+J1005,2025-07-05,C005,5YJSA1E26GF145678,AC Diagnostic,In Progress,120

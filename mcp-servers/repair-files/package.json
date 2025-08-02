@@ -1,0 +1,17 @@
+{
+  "name": "mcp-repair-files",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "MCP server exposing search/list/read tools over data/repair_shop",
+  "main": "server.js",
+  "bin": {
+    "mcp-repair-files": "server.js"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.5.0",
+    "fast-glob": "^3.3.2"
+  }
+}

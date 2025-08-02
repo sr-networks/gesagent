@@ -1,0 +1,12 @@
+[
+  { "name": "Alex Meyer", "phone": "+49 151 111111", "email": "alex.meyer@example.com" },
+  { "name": "Lena Schulz", "phone": "+49 170 222222", "email": "lena.schulz@example.com" },
+  { "name": "Jonas Weber", "phone": "+49 160 333333", "email": "jonas.weber@example.com" },
+  { "name": "Sophie Klein", "phone": "+49 151 444444", "email": "sophie.klein@example.com" },
+  { "name": "Tom Becker", "phone": "+49 171 555555", "email": "tom.becker@example.com" },
+  { "name": "Marta Rossi", "phone": "+39 345 666666", "email": "marta.rossi@example.com" },
+  { "name": "Peter Schmidt", "phone": "+49 152 777777", "email": "peter.schmidt@example.com" },
+  { "name": "Elif Yilmaz", "phone": "+49 157 888888", "email": "elif.yilmaz@example.com" },
+  { "name": "Kim Nguyen", "phone": "+49 176 999999", "email": "kim.nguyen@example.com" },
+  { "name": "Robert Koch", "phone": "+49 151 000000", "email": "robert.koch@example.com" }
+]

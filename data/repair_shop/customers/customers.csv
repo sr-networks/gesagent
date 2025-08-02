@@ -1,0 +1,6 @@
+customer_id,first_name,last_name,phone,email
+C001,John,Doe,+1-555-0101,john.doe@example.com
+C002,Jane,Smith,+1-555-0102,jane.smith@example.com
+C003,Alex,Johnson,+1-555-0103,alex.johnson@example.com
+C004,Maria,Gonzalez,+1-555-0104,maria.gonzalez@example.com
+C005,Liam,O'Brien,+1-555-0105,liam.obrien@example.com
