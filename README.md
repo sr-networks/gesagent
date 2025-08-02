@@ -1,4 +1,4 @@
-# Customer Service Bot v0.1
+# Customer Service Agent v0.1
 
 > 🤖 An intelligent customer service chatbot with MCP (Model Context Protocol) integration for accessing business data and providing automated support.
 
