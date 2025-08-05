@@ -1,5 +1,5 @@
 {
-  "name": "repair-chat-app",
+  "name": "legal-agent-app",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -34,5 +34,5 @@
     "typescript-eslint": "^8.35.1",
     "vite": "^7.0.4"
   },
-  "description": "Local chat UI for Ollama (qwen3:8b) with MCP access to repair shop files"
+  "description": "Local chat UI for Ollama (qwen3:8b) with MCP access to German federal law database"
 }

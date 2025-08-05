@@ -1,6 +1,6 @@
-# Customer Service Agent v0.1
+# German Legal Agent v0.1
 
-> 🤖 An intelligent customer service chatbot with MCP (Model Context Protocol) integration for accessing business data and providing automated support.
+> ⚖️ An intelligent German legal QA agent with MCP (Model Context Protocol) integration for accessing comprehensive German federal law database and providing legal analysis.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![React](https://img.shields.io/badge/React-18.0+-blue.svg)](https://reactjs.org/)
@@ -9,24 +9,24 @@
 
 ## 🚀 Overview
 
-This customer service bot provides automated support for businesses by intelligently accessing company datasets through the Model Context Protocol (MCP). It can answer customer inquiries about services, orders, products, and more by querying structured business data in real-time.
+This German legal agent provides expert legal analysis by intelligently accessing the comprehensive German federal law database through the Model Context Protocol (MCP). It can answer legal questions, explain regulations, analyze legal scenarios, and provide precise legal references by querying the complete German federal law collection in real-time.
 
 ### Key Capabilities
-- **Data-Driven Responses**: Access customer records, service history, inventory, and business information
+- **Legal Data Access**: Comprehensive access to all German federal laws and regulations (Bundesgesetze und -verordnungen)
 - **Multi-LLM Support**: Works with both local (Ollama) and cloud-based (OpenRouter) language models
-- **Tool-Calling Architecture**: Automatic data retrieval without manual intervention
-- **Real-Time Monitoring**: Complete visibility into data queries and system operations
+- **Tool-Calling Architecture**: Automatic legal document retrieval without manual intervention
+- **Real-Time Monitoring**: Complete visibility into legal database queries and system operations
 - **Clean Interface**: Filtered chat experience with technical details in separate monitoring panel
 
 ## 🏗️ Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   React UI      │    │   LLM Provider  │    │  Business Data  │
+│   React UI      │    │   LLM Provider  │    │  German Law DB  │
 │                 │    │                 │    │                 │
-│ • Chat Interface│◄──►│ • Ollama        │◄──►│ • Customer DB   │
-│ • Provider Setup│    │ • OpenRouter    │    │ • Service Logs  │
-│ • MCP Monitoring│    │ • Tool Calling  │    │ • Product Info  │
+│ • Chat Interface│◄──►│ • Ollama        │◄──►│ • Federal Laws  │
+│ • Provider Setup│    │ • OpenRouter    │    │ • Regulations   │
+│ • MCP Monitoring│    │ • Tool Calling  │    │ • Legal Codes   │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          ▲                       ▲                       ▲
          │                       │                       │
@@ -54,7 +54,7 @@ This customer service bot provides automated support for businesses by intellige
 1. **Clone the repository**
 ```bash
 git clone <repository-url>
-cd customer-service-bot
+cd german-legal-agent
 ```
 
 2. **Install dependencies**
@@ -66,13 +66,13 @@ cd app && npm install
 cd ../server && npm install
 
 # MCP Tools
-cd ../mcp-servers/repair-files && npm install
+cd ../mcp-servers/legal-files && npm install
 ```
 
 3. **Configure your data source**
 ```bash
-# Set your business data directory (use absolute path on your system)
-export REPAIR_FILES_ROOT="$(pwd)/data"
+# Set your German law data directory (use absolute path on your system)
+export LEGAL_FILES_ROOT="$(pwd)/data/gesetze"
 ```
 
 ### 🚀 Running the Application
@@ -88,7 +88,7 @@ export REPAIR_FILES_ROOT="$(pwd)/data"
 1. **Start MCP Proxy Server**
 ```bash
 cd server
-REPAIR_FILES_ROOT="$(pwd)/../data" npm start
+LEGAL_FILES_ROOT="$(pwd)/../data/gesetze" npm start
 ```
 
 2. **Start Frontend**
@@ -104,8 +104,8 @@ npm run dev
 ## 🎯 Features
 
 ### Core Functionality
-- ✅ **Intelligent Query Processing**: Multi-iteration reasoning for complex customer requests
-- ✅ **Real-Time Data Access**: Live querying of business databases and files
+- ✅ **Intelligent Legal Analysis**: Multi-iteration reasoning for complex legal questions
+- ✅ **Real-Time Legal Data Access**: Live querying of German federal law database
 - ✅ **Multi-Provider Support**: Choice between local and cloud-based language models
 - ✅ **Enhanced Monitoring**: Detailed logging of all data operations
 - ✅ **Clean Chat Interface**: Customer-focused view with technical details hidden
@@ -142,42 +142,43 @@ ollama pull qwen3:8b
 The bot can be configured to access various business data sources:
 
 ```javascript
-// Example data structure
-data/
-├── customers.json          // Customer records
-├── services.csv           // Service history
-├── products/             // Product information
-├── orders/              // Order tracking
-└── knowledge-base/      // FAQ and policies
+// German Law Database Structure
+data/gesetze/
+├── a/                    // Laws starting with 'A'
+│   ├── agg/             // Allgemeines Gleichbehandlungsgesetz
+│   │   └── index.md     // Full law text in Markdown
+│   └── arbzg/           // Arbeitszeitgesetz
+├── b/                   // Laws starting with 'B'
+└── ...                  // All German federal laws A-Z
 ```
 
 ## 📊 Usage Examples
 
-### Customer Service Scenarios
+### Legal QA Scenarios
 
-**Order Status Inquiry**
+**Employment Law Question**
 ```
-Customer: "What's the status of my order #12345?"
-Bot: [Accesses order database] → "Your order #12345 was shipped yesterday and will arrive tomorrow via UPS."
-```
-
-**Product Information**
-```
-Customer: "Do you have brake pads for a 2018 Honda Civic?"
-Bot: [Searches inventory] → "Yes, we have OEM brake pads in stock for your 2018 Civic. Part #BP-HC18, $89.99."
+User: "What are the maximum working hours allowed in Germany?"
+Agent: [Accesses Arbeitszeitgesetz] → "According to § 3 ArbZG, the daily working time must not exceed 8 hours. It can be extended to 10 hours if compensated within 6 months or 24 weeks."
 ```
 
-**Service History**
+**Anti-Discrimination Law**
 ```
-Customer: "When was my last oil change?"
-Bot: [Queries service records] → "Your last oil change was on March 15th, 2024. Based on your driving, the next one is due around June 15th."
+User: "What constitutes discrimination based on age under German law?"
+Agent: [Searches AGG] → "Under § 1 AGG (Allgemeines Gleichbehandlungsgesetz), age-based discrimination is prohibited. § 10 AGG allows different treatment only if objectively justified by legitimate aims."
+```
+
+**Legal Reference Lookup**
+```
+User: "What does § 823 BGB say about tort liability?"
+Agent: [Queries BGB] → "§ 823 BGB establishes the fundamental principle of tort liability: whoever unlawfully and culpably injures another's life, body, health, freedom, property, or similar rights must compensate for damages."
 ```
 
 ## 🔧 Development
 
 ### Project Structure
 ```
-customer-service-bot/
+german-legal-agent/
 ├── app/                    # React frontend
 │   ├── src/
 │   │   ├── components/     # UI components
@@ -185,7 +186,7 @@ customer-service-bot/
 │   │   └── styles/        # CSS styles
 ├── server/                # MCP proxy server
 ├── mcp-servers/          # MCP tool implementations
-├── data/                 # Sample business data
+├── data/gesetze/         # German federal law database
 └── docs/                 # Documentation
 ```
 
@@ -227,7 +228,7 @@ cd ../server && npm run build
 
 ### Environment Variables
 ```bash
-REPAIR_FILES_ROOT="./data"  # Relative to project root
+LEGAL_FILES_ROOT="./data/gesetze"  # Relative to project root
 OPENROUTER_API_KEY="your-api-key"
 MCP_SERVER_PORT=8787
 FRONTEND_PORT=5173

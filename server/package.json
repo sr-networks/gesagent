@@ -10,7 +10,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "Express proxy that spawns MCP server over stdio and exposes HTTP endpoints",
+  "description": "Express proxy that spawns MCP legal-files server over stdio and exposes HTTP endpoints",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.5.0",
     "cors": "^2.8.5",

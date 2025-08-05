@@ -6,7 +6,7 @@
  *  - GET  /files?dir=...          -> convenience wrapper for list_files
  *
  * This version uses the official MCP Client + Stdio transport to connect to the
- * local MCP server (mcp-servers/repair-files/server.js) so the initialize
+ * local MCP server (mcp-servers/legal-files/server.js) so the initialize
  * handshake and tool calls are handled by the SDK.
  */
 import express from 'express';
@@ -28,7 +28,7 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 const MCP_CMD = process.env.MCP_CMD || 'node';
 const MCP_ARGS = process.env.MCP_ARGS
   ? JSON.parse(process.env.MCP_ARGS)
-  : [path.join(REPO_ROOT, 'mcp-servers/repair-files/server.js')];
+  : [path.join(REPO_ROOT, 'mcp-servers/legal-files/server.js')];
 
 const app = express();
 app.use(cors());
@@ -46,7 +46,7 @@ class MCPProcess {
       env: {
         ...env,
         // Ensure dataset root is absolute and stable
-        REPAIR_FILES_ROOT: env.REPAIR_FILES_ROOT || path.join(REPO_ROOT, 'data/repair_shop')
+        LEGAL_FILES_ROOT: env.LEGAL_FILES_ROOT || path.join(REPO_ROOT, 'data/gesetze')
       }
     });
 
@@ -90,13 +90,16 @@ app.get('/health', (req, res) => {
   res.json({ ok: true });
 });
 
-// Simple tool list (static mirror of the repair-files server)
+// Simple tool list (static mirror of the legal-files server)
 app.get('/tools', (req, res) => {
   res.json({
     tools: [
-      { name: 'list_files', description: 'List files under the dataset root or a subdirectory' },
-      { name: 'search_files', description: 'Search for case-insensitive text across files (glob filter optional)' },
-      { name: 'read_file', description: 'Read a file relative to dataset root' }
+      { name: 'list_files', description: 'List German law files under the dataset root or a subdirectory' },
+      { name: 'search_files', description: 'Search for case-insensitive text across German law files (glob filter optional)' },
+      { name: 'read_file', description: 'Read the full contents of a German law file (WARNING: may be very large)' },
+      { name: 'get_file_info', description: 'Get metadata about a German law file including size' },
+      { name: 'read_file_chunk', description: 'Read a specific chunk of a large German law file' },
+      { name: 'find_and_read', description: 'Find text in a German law file and read context around it (MOST EFFICIENT for specific paragraphs)' }
     ]
   });
 });
@@ -106,7 +109,7 @@ app.get('/tools', (req, res) => {
  * Example:
  *   curl -s -X POST http://localhost:8787/tools/call \
  *     -H 'Content-Type: application/json' \
- *     -d '{"name":"read_file","arguments":{"file":"repairs.csv"}}'
+ *     -d '{"name":"read_file","arguments":{"file":"a/agg/index.md"}}'
  */
 app.post('/tools/call', async (req, res) => {
   try {

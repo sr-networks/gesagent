@@ -1,11 +1,11 @@
 {
-  "name": "mcp-repair-files",
+  "name": "mcp-legal-files",
   "version": "0.1.0",
   "type": "module",
-  "description": "MCP server exposing search/list/read tools over data/repair_shop",
+  "description": "MCP server exposing search/list/read tools over data/gesetze (German law)",
   "main": "server.js",
   "bin": {
-    "mcp-repair-files": "server.js"
+    "mcp-legal-files": "server.js"
   },
   "scripts": {
     "start": "node server.js"

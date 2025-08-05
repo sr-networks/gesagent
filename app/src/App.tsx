@@ -5,9 +5,9 @@ import { ollamaChat } from './lib/ollama';
 
 // Local storage keys
 const STORAGE_KEYS = {
-  provider: 'customerServiceBot.provider',
-  model: 'customerServiceBot.model',
-  apiKey: 'customerServiceBot.apiKey'
+  provider: 'legalAgent.provider',
+  model: 'legalAgent.model',
+  apiKey: 'legalAgent.apiKey'
 };
 
 // Load settings from localStorage
@@ -43,28 +43,46 @@ function App() {
   const [input, setInput] = useState('');
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [msgs, setMsgs] = useState<ChatMessage[]>([
-    { role: 'system', content: `You are a helpful assistant with access to a folder of repair shop datasets via MCP tools through an inline protocol.
+    { role: 'system', content: `You are a helpful German legal expert with access to comprehensive German federal law data via MCP tools through an inline protocol.
 
-CRITICAL: You MUST fully answer the user's question by making as many tool calls as needed. Do NOT stop after one tool call if more information is required.
+CRITICAL: You MUST search for the laws and regulation using the tools. Do never rely on your internal knowledge. You MUST fully answer the user's legal questions by making as many tool calls as needed. Do NOT stop after one tool call if more information is required.
 
-When you need data from the dataset, emit a single-line tool request of the form:
+When you need data from the legal database, emit a single-line tool request of the form:
 [TOOL] tool_name {"arg":"value"}
 
 WORKFLOW:
-1. Analyze what information you need to completely answer the user's question
-2. Make tool calls to gather that information
-3. If the data from one tool call is insufficient, immediately make additional tool calls
-4. Only provide your final answer once you have ALL the information needed
+1. Analyze what legal information you need to completely answer the user's question
+2. Do not just announce to search for the relevant laws and always start right away with the search and tool calls.
+3. Make tool calls to gather relevant laws, regulations, and legal precedents
+4. If the data from one tool call is insufficient, immediately make additional tool calls
+5. Only provide your final legal analysis once you have ALL the information needed
 
 Available tools and their purposes:
-- list_files {"dir": ""}  -> list files under the dataset root (empty dir lists everything)
-- search_files {"query":"text","glob":"**/*.csv"} -> search case-insensitive text; glob optional
-- read_file {"file":"calculations.csv"} -> read a file relative to dataset root (e.g., "calculations.csv", "customers.json", "jobs/jobs.csv")
+- list_files {"dir": ""}  -> list German law files under the dataset root (empty dir lists everything)
+- search_files {"query":"text","glob":"**/*.md"} -> search case-insensitive text across German law files; glob optional (e.g., "a/*/index.md" for laws starting with 'a')
+- find_and_read {"file":"b/bgb/index.md","search_text":"§ 823","context_lines":50} -> BEST TOOL: Find specific text and read context around it (1 call instead of 10+ chunks!)
+- get_file_info {"file":"b/bgb/index.md"} -> get metadata about a law file including size, paragraphs, chunks needed
+- read_file_chunk {"file":"b/bgb/index.md","start_line":1,"num_lines":100} -> read specific portion of large law file
+- read_file {"file":"a/agg/index.md"} -> read full file content (WARNING: automatically truncates files >300KB)
+
+Legal Context:
+- You have access to all German federal laws and regulations (Bundesgesetze und -verordnungen)
+- Laws are organized alphabetically in directories (a/, b/, c/, etc.)
+- Each law has an index.md file with the full text in Markdown format
+- Always cite specific paragraphs (§) and provide precise legal references
+- Explain legal concepts in clear, understandable German
+
+CRITICAL WORKFLOW for efficient legal research:
+1. For specific paragraphs (e.g., "§ 823"): Use find_and_read directly - finds and reads context in 1 call!
+2. For broad exploration: Use search_files to find relevant laws, then find_and_read for details
+3. For file overview: Use get_file_info to understand structure
+4. Only use read_file_chunk for sequential reading or read_file for small files
 
 Rules:
 - Emit only the [TOOL] line when calling a tool, nothing else on that line.
-- After receiving tool results, CONTINUE your reasoning and make more tool calls if needed.
-- Only provide a final answer when you have gathered ALL necessary information.
+- After receiving tool results, CONTINUE your legal analysis and make more tool calls if needed.
+- Only provide your final legal opinion once you have gathered ALL necessary information.
+- Always be thorough and precise in your legal analysis.
 - Prefer using tools over disclaimers. Do NOT say you lack access—use the tools.
 ` }
   ]);
@@ -294,7 +312,7 @@ Rules:
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '90vh' }}>
       <header style={{ padding: 12, borderBottom: '1px solid #ddd', display: 'flex', gap: 8, alignItems: 'center' }}>
-        <strong>Repair Chat</strong>
+        <strong>German Legal Agent</strong>
         {(settings.provider !== 'ollama' || settings.model !== 'qwen3:8b' || settings.apiKey !== '') && (
           <span style={{ fontSize: 11, color: '#6b7280', marginLeft: 8 }}>
             📁 Settings loaded
@@ -416,7 +434,7 @@ Rules:
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
-          placeholder="Ask about customers, vehicles, or jobs..."
+          placeholder="Ask about German laws, regulations, or legal concepts..."
           style={{ flex: 1, fontSize: 16, padding: 8 }}
         />
         <button type="submit" disabled={streaming}>

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Repair Chat MCP integration', () => {
-  test('should call MCP tool and render result', async ({ page }) => {
+test.describe('German Legal Agent MCP integration', () => {
+  test('should call MCP tool and render legal results', async ({ page }) => {
     // Listen for console messages, network requests, and errors
     const consoleLogs: string[] = [];
     const networkRequests: string[] = [];
@@ -37,12 +37,12 @@ test.describe('Repair Chat MCP integration', () => {
     console.log(`Testing on: ${appUrl}`);
 
     // Wait for app to load
-    await page.waitForSelector('input[placeholder="Ask about customers, vehicles, or jobs..."]', { timeout: 10000 });
+    await page.waitForSelector('input[placeholder="Ask about German laws, regulations, or legal concepts..."]', { timeout: 10000 });
 
-    const input = page.locator('input[placeholder="Ask about customers, vehicles, or jobs..."]');
+    const input = page.locator('input[placeholder="Ask about German laws, regulations, or legal concepts..."]');
     
-    // Test with a more direct query that should trigger list_files
-    await input.fill('Show me all files in the dataset');
+    // Test with a legal query that should trigger list_files
+    await input.fill('Show me all German laws in the database');
     await page.keyboard.press('Enter');
 
     // Wait for the assistant message to appear
@@ -63,7 +63,7 @@ test.describe('Repair Chat MCP integration', () => {
     // Look for specific indicators
     const hasToolCall = allText?.includes('[TOOL]') || false;
     const hasMcpResult = allText?.includes('[MCP') || false;
-    const hasFilesList = allText?.includes('README.md') || allText?.includes('repairs.csv') || false;
+    const hasFilesList = allText?.includes('agg/index.md') || allText?.includes('arbzg/index.md') || false;
     
     console.log('Has tool call:', hasToolCall);
     console.log('Has MCP result:', hasMcpResult);
@@ -90,7 +90,7 @@ test.describe('Repair Chat MCP integration', () => {
     await page.screenshot({ path: '/tmp/chat-debug-fixed.png', fullPage: true });
 
     // Enhanced assertions for the new logging features
-    const hasUserMessage = allText?.includes('Show me all files in the dataset') || false;
+    const hasUserMessage = allText?.includes('Show me all German laws in the database') || false;
     const hasAssistantResponse = allText?.includes('assistant') || false;
     
     expect(hasUserMessage).toBe(true);
