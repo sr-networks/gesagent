@@ -95,11 +95,11 @@ app.get('/tools', (req, res) => {
   res.json({
     tools: [
       { name: 'list_files', description: 'List German law files under the dataset root or a subdirectory' },
-      { name: 'search_files', description: 'Search for case-insensitive text across German law files (glob filter optional)' },
+      { name: 'search_files', description: 'Search for case-insensitive text across German law files with advanced AND/OR logic' },
       { name: 'read_file', description: 'Read the full contents of a German law file (WARNING: may be very large)' },
       { name: 'get_file_info', description: 'Get metadata about a German law file including size' },
       { name: 'read_file_chunk', description: 'Read a specific chunk of a large German law file' },
-      { name: 'find_and_read', description: 'Find text in a German law file and read context around it (MOST EFFICIENT for specific paragraphs)' }
+      { name: 'find_and_read', description: 'Find text in a German law file and read context around it (MOST EFFICIENT for specific paragraphs)' },
     ]
   });
 });

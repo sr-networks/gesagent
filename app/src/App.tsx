@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import './App.css';
 import type { ChatMessage } from './lib/ollama';
 import { ollamaChat } from './lib/ollama';
+import BatchProcessor from './BatchProcessor';
 
 // Local storage keys
 const STORAGE_KEYS = {
@@ -37,6 +38,7 @@ function getDefaultModel(provider: 'ollama' | 'openrouter') {
 
 function App() {
   const settings = loadSettings();
+  const [mode, setMode] = useState<'chat' | 'batch'>('chat');
   const [model, setModel] = useState(settings.model);
   const [provider, setProvider] = useState<'ollama' | 'openrouter'>(settings.provider);
   const [apiKey, setApiKey] = useState(settings.apiKey);
@@ -59,10 +61,10 @@ WORKFLOW:
 
 Available tools and their purposes:
 - list_files {"dir": ""}  -> list German law files under the dataset root (empty dir lists everything)
-- search_files {"query":"text","glob":"**/*.md"} -> search case-insensitive text across German law files; glob optional (e.g., "a/*/index.md" for laws starting with 'a')
-- find_and_read {"file":"b/bgb/index.md","search_text":"§ 823","context_lines":50} -> BEST TOOL: Find specific text and read context around it (1 call instead of 10+ chunks!)
-- get_file_info {"file":"b/bgb/index.md"} -> get metadata about a law file including size, paragraphs, chunks needed
-- read_file_chunk {"file":"b/bgb/index.md","start_line":1,"num_lines":100} -> read specific portion of large law file
+- search_files {"query":"§ 115 AND ZPO","max_results":20,"context_size":200} -> ENHANCED: search with AND/OR logic across German law files. Examples: "§ 115 AND ZPO", "Prozesskostenhilfe OR Verfahrenskostenhilfe", "§ 115 AND (Ehegatte OR Prozesskostenvorschuss)". Use AND for all required terms, OR for alternatives, parentheses for grouping.
+- find_and_read {"file":"z/zpo/index.md","search_text":"§ 115","context_lines":50} -> BEST TOOL: Find specific text and read context around it (1 call instead of 10+ chunks!)
+- get_file_info {"file":"z/zpo/index.md"} -> get metadata about a law file including size, paragraphs, chunks needed
+- read_file_chunk {"file":"z/zpo/index.md","start_line":1,"num_lines":100} -> read specific portion of large law file
 - read_file {"file":"a/agg/index.md"} -> read full file content (WARNING: automatically truncates files >300KB)
 
 Legal Context:
@@ -73,10 +75,25 @@ Legal Context:
 - Explain legal concepts in clear, understandable German
 
 CRITICAL WORKFLOW for efficient legal research:
-1. For specific paragraphs (e.g., "§ 823"): Use find_and_read directly - finds and reads context in 1 call!
-2. For broad exploration: Use search_files to find relevant laws, then find_and_read for details
-3. For file overview: Use get_file_info to understand structure
-4. Only use read_file_chunk for sequential reading or read_file for small files
+1. For complex legal queries: Use search_files with AND/OR logic first - e.g., "§ 115 AND ZPO AND Prozesskostenhilfe" or "Ehegatte AND (Prozesskostenvorschuss OR Verfahrenskostenhilfe)"
+2. For specific paragraphs: Use find_and_read when you know the exact law file - finds and reads context in 1 call!
+3. For broad exploration: Use search_files with OR logic for synonyms - e.g., "Prozesskostenhilfe OR Verfahrenskostenhilfe OR PKH"
+4. For file overview: Use get_file_info to understand structure
+5. Only use read_file_chunk for sequential reading or read_file for small files
+
+ADVANCED SEARCH EXAMPLES:
+- search_files: "§ 115 AND ZPO" - Find paragraph 115 in procedural law
+- search_files: "Prozesskostenhilfe OR Verfahrenskostenhilfe" - Find either term
+- search_files: "§ 115 AND (Ehegatte OR Prozesskostenvorschuss)" - Complex grouping
+- search_files: "Kündigung AND Sozialplan" - Employment law terms
+- search_files: "Schadensersatz AND (BGB OR Deliktsrecht)" - Damages in civil law
+- search_files: "Zugang AND Kündigung AND Briefkasten AND Postzustellungszeiten" - Break down complex queries into keywords
+
+IMPORTANT SEARCH STRATEGY:
+- Instead of: "Zugang Kündigung Einwurf in Briefkasten gewöhnliche Postzustellungszeiten"
+- Use: "Zugang AND Kündigung AND Briefkasten AND Postzustellungszeiten"
+- Break complex legal concepts into individual meaningful keywords
+- The system will automatically find documents containing ALL keywords (much more effective!)
 
 Rules:
 - Emit only the [TOOL] line when calling a tool, nothing else on that line.
@@ -107,7 +124,7 @@ Rules:
   }, [provider, model, apiKey, settingsLoaded]);
 
   // Helpers to log MCP usage in the UI
-  const [lastToolCall, setLastToolCall] = useState<{name: string, params: any} | null>(null);
+  const [, setLastToolCall] = useState<{name: string, params: any} | null>(null);
   const lastToolCallRef = useRef<{name: string, params: any} | null>(null);
   
   function log(line: string) {
@@ -309,10 +326,47 @@ Rules:
     setStreaming(false);
   }
 
+  // Render batch processor if in batch mode
+  if (mode === 'batch') {
+    return <BatchProcessor />;
+  }
+
+  const currentMode = mode;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '90vh' }}>
       <header style={{ padding: 12, borderBottom: '1px solid #ddd', display: 'flex', gap: 8, alignItems: 'center' }}>
         <strong>German Legal Agent</strong>
+        <div style={{ display: 'flex', gap: 4, marginLeft: 16 }}>
+          <button
+            onClick={() => setMode('chat')}
+            style={{
+              padding: '4px 8px',
+              border: '1px solid #d1d5db',
+              borderRadius: '4px',
+              background: currentMode === 'chat' ? '#3b82f6' : '#f9fafb',
+              color: currentMode === 'chat' ? 'white' : '#374151',
+              fontSize: '12px',
+              cursor: 'pointer'
+            }}
+          >
+            Chat Mode
+          </button>
+          <button
+            onClick={() => setMode('batch')}
+            style={{
+              padding: '4px 8px',
+              border: '1px solid #d1d5db',
+              borderRadius: '4px',
+              background: (currentMode as string) === 'batch' ? '#3b82f6' : '#f9fafb',
+              color: (currentMode as string) === 'batch' ? 'white' : '#374151',
+              fontSize: '12px',
+              cursor: 'pointer'
+            }}
+          >
+            Batch Mode
+          </button>
+        </div>
         {(settings.provider !== 'ollama' || settings.model !== 'qwen3:8b' || settings.apiKey !== '') && (
           <span style={{ fontSize: 11, color: '#6b7280', marginLeft: 8 }}>
             📁 Settings loaded

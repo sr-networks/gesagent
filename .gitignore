@@ -1,0 +1,7 @@
+data/urteile
+data/dejure
+server/server.log
+.DS_Store*
+data/.DS_Store
+.venv*
+sample-cases.csv

@@ -19,12 +19,14 @@ const toolsCapability = {
     }
   },
   search_files: {
-    description: 'Search for case-insensitive text across German law files (glob filter optional)',
+    description: 'Search for case-insensitive text across German law files with advanced AND/OR logic. Use " AND " for all terms required, " OR " for any terms, or combine both. Examples: "§ 115 AND ZPO", "Prozesskostenhilfe OR Verfahrenskostenhilfe", "§ 115 AND (ZPO OR BGB)"',
     inputSchema: {
       type: 'object',
       properties: {
-        query: { type: 'string' },
-        glob: { type: 'string', description: 'glob like **/*.md or a/*/index.md' }
+        query: { type: 'string', description: 'Search query with AND/OR logic. Examples: "§ 115 AND ZPO", "Prozesskostenhilfe OR Verfahrenskostenhilfe"' },
+        glob: { type: 'string', description: 'glob like **/*.md or a/*/index.md' },
+        max_results: { type: 'number', description: 'Maximum number of results to return (default 50)', default: 50 },
+        context_size: { type: 'number', description: 'Size of preview context in characters (default 160)', default: 160 }
       },
       required: ['query']
     }
@@ -102,34 +104,243 @@ const tools = {
   },
   
   search_files: {
-    description: 'Search for case-insensitive text across German law files (glob filter optional)',
+    description: 'Search for case-insensitive text across German law files with advanced AND/OR logic. Use " AND " for all terms required, " OR " for any terms, or combine both. Examples: "§ 115 AND ZPO", "Prozesskostenhilfe OR Verfahrenskostenhilfe", "§ 115 AND (ZPO OR BGB)"',
     inputSchema: {
       type: 'object',
       properties: {
-        query: { type: 'string' },
-        glob: { type: 'string', description: 'glob like **/*.md or a/*/index.md' }
+        query: { type: 'string', description: 'Search query with AND/OR logic. Examples: "§ 115 AND ZPO", "Prozesskostenhilfe OR Verfahrenskostenhilfe"' },
+        glob: { type: 'string', description: 'glob like **/*.md or a/*/index.md' },
+        max_results: { type: 'number', description: 'Maximum number of results to return (default 50)', default: 50 },
+        context_size: { type: 'number', description: 'Size of preview context in characters (default 160)', default: 160 }
       },
       required: ['query']
     },
-    handler: async ({ query, glob }) => {
-      const patterns = glob ? [glob] : ['**/*'];
+    handler: async ({ query, glob, max_results = 50, context_size = 160 }) => {
+      const patterns = glob ? [glob] : ['**/*.md'];
       const files = await fg(patterns, { cwd: ROOT_ABS, onlyFiles: true, dot: false });
-      const q = query.toLowerCase();
+      
+      // Simplified AND/OR query parsing
+      const parseQuery = (q) => {
+        const processIndividualTerm = (term) => {
+          const cleanTerm = term.trim();
+          
+          // Don't split legal references or short terms
+          if (cleanTerm.includes('§') || cleanTerm.includes('Abs.') || cleanTerm.length < 20) {
+            return cleanTerm;
+          }
+          
+          // Split very long phrases into keywords (only if truly necessary)
+          const stopWords = new Set(['der', 'die', 'das', 'und', 'oder', 'in', 'auf', 'von', 'zu', 'mit', 'bei', 'nach', 'vor', 'über', 'unter', 'durch', 'für', 'an', 'um', 'gegen', 'ohne', 'bis', 'seit', 'während', 'wegen', 'trotz', 'statt']);
+          
+          const words = cleanTerm.split(/\s+/)
+            .map(w => w.trim())
+            .filter(w => w.length > 2 && !stopWords.has(w.toLowerCase()));
+          
+          if (words.length > 3) {  // Only split very long phrases
+            return {
+              type: 'AND',
+              terms: words.slice(0, 4)  // Limit to max 4 terms to avoid over-splitting
+            };
+          }
+          
+          return cleanTerm;
+        };
+        
+        const processQuery = (str) => {
+          // Handle parentheses by recursively processing groups
+          if (str.includes('(')) {
+            // Simple parentheses handling - process inner groups first
+            return str.replace(/\(([^)]+)\)/g, (match, group) => {
+              const processed = processQuery(group);
+              return typeof processed === 'string' ? processed : JSON.stringify(processed);
+            });
+          }
+          
+          // Split by OR first (lower precedence)
+          const orParts = str.split(' OR ').map(part => part.trim()).filter(t => t);
+          
+          if (orParts.length > 1) {
+            return {
+              type: 'OR',
+              terms: orParts.map(part => {
+                const andParts = part.split(' AND ').map(t => t.trim()).filter(t => t);
+                if (andParts.length > 1) {
+                  return { type: 'AND', terms: andParts.map(term => processIndividualTerm(term)) };
+                }
+                return processIndividualTerm(part);
+              })
+            };
+          }
+          
+          // Split by AND
+          const andParts = str.split(' AND ').map(t => t.trim()).filter(t => t);
+          if (andParts.length > 1) {
+            return { 
+              type: 'AND', 
+              terms: andParts.map(term => processIndividualTerm(term))
+            };
+          }
+          
+          return processIndividualTerm(str.trim());
+        };
+        
+        return processQuery(q);
+      };
+      
+      const evaluateQuery = (queryObj, text) => {
+        const ltext = text.toLowerCase();
+        
+        const evaluate = (obj) => {
+          if (typeof obj === 'string') {
+            const term = obj.toLowerCase();
+            
+            // Handle paragraph symbols with flexible matching
+            if (term.includes('§')) {
+              const paraNum = term.match(/§\s*(\d+)/);
+              if (paraNum) {
+                const num = paraNum[1];
+                const patterns = [
+                  `§ ${num}`,
+                  `§${num}`,
+                  `paragraph ${num}`,
+                  `para ${num}`,
+                  term
+                ];
+                return patterns.some(pattern => ltext.includes(pattern));
+              }
+            }
+            
+            // Handle "Abs." (Absatz) variations
+            if (term.includes('abs.')) {
+              const variations = [
+                term,
+                term.replace('abs.', 'absatz'),
+                term.replace('abs.', 'abs'),
+                term.replace('abs.', 'absätze')
+              ];
+              return variations.some(variation => ltext.includes(variation));
+            }
+            
+            return ltext.includes(term);
+          }
+          
+          if (obj && obj.type === 'AND') {
+            return obj.terms.every(term => evaluate(term));
+          }
+          
+          if (obj && obj.type === 'OR') {
+            return obj.terms.some(term => evaluate(term));
+          }
+          
+          return false;
+        };
+        
+        return evaluate(queryObj);
+      };
+      
+      const findBestMatch = (queryObj, text) => {
+        const ltext = text.toLowerCase();
+        let bestMatch = { index: -1, score: 0 };
+        
+        // Collect all search terms (simplified)
+        const collectTerms = (obj) => {
+          if (typeof obj === 'string') return [obj.toLowerCase()];
+          if (obj && obj.terms && Array.isArray(obj.terms)) {
+            return obj.terms.flatMap(term => collectTerms(term));
+          }
+          return [];
+        };
+        
+        const terms = collectTerms(queryObj);
+        if (terms.length === 0) return bestMatch;
+        
+        // Find the position where most terms appear closest together
+        const stepSize = Math.max(50, Math.floor(text.length / 200)); // Optimize search
+        for (let i = 0; i < text.length - context_size; i += stepSize) {
+          const window = ltext.slice(i, i + context_size * 3);
+          let score = 0;
+          
+          for (const term of terms) {
+            if (window.includes(term)) {
+              score += Math.min(term.length, 20); // Cap individual term score
+            }
+          }
+          
+          if (score > bestMatch.score) {
+            bestMatch = { index: i, score };
+          }
+        }
+        
+        // If no good match found, use first occurrence of any term
+        if (bestMatch.score === 0 && terms.length > 0) {
+          for (const term of terms) {
+            const idx = ltext.indexOf(term);
+            if (idx >= 0) {
+              bestMatch = { index: idx, score: 1 };
+              break;
+            }
+          }
+        }
+        
+        return bestMatch;
+      };
+      
+      const queryObj = parseQuery(query);
       const matches = [];
+      
+      console.error(`Query: "${query}" -> Parsed:`, JSON.stringify(queryObj, null, 2));
+      
       for (const f of files) {
+        if (matches.length >= max_results) break;
+        
         const full = path.join(ROOT_ABS, f);
         try {
           const text = await fs.readFile(full, 'utf8');
-          const ltext = text.toLowerCase();
-          const idx = ltext.indexOf(q);
-          if (idx >= 0) {
-            const start = Math.max(0, idx - 80);
-            const end = Math.min(text.length, idx + 80);
-            matches.push({ file: f, preview: text.slice(start, end) });
+          
+          if (evaluateQuery(queryObj, text)) {
+            const match = findBestMatch(queryObj, text);
+            const start = Math.max(0, match.index >= 0 ? match.index : 0);
+            const end = Math.min(text.length, start + context_size);
+            
+            // Clean up preview text
+            let preview = text.slice(start, end);
+            
+            // If we found a good match position, try to start at a word boundary
+            if (match.index > 0 && start > 0) {
+              const betterStart = text.lastIndexOf(' ', start + 50);
+              if (betterStart > start - 50 && betterStart > 0) {
+                preview = text.slice(betterStart + 1, betterStart + 1 + context_size);
+              }
+            }
+            
+            // Remove excessive whitespace and newlines for preview
+            preview = preview.replace(/\s+/g, ' ').trim();
+            
+            matches.push({ 
+              file: f, 
+              preview,
+              match_score: match.score,
+              relevance: match.score / text.length // Normalize by document length
+            });
           }
-        } catch {}
+        } catch (error) {
+          console.error(`Error reading file ${f}:`, error.message);
+        }
       }
-      return { matches };
+      
+      // Sort matches by relevance score and match score combined
+      matches.sort((a, b) => {
+        const scoreA = (a.relevance || 0) * 1000 + (a.match_score || 0);
+        const scoreB = (b.relevance || 0) * 1000 + (b.match_score || 0);
+        return scoreB - scoreA;
+      });
+      
+      return { 
+        matches: matches.slice(0, max_results),
+        query_parsed: queryObj,
+        total_files_searched: files.length,
+        search_strategy: 'Advanced AND/OR with legal term optimization'
+      };
     }
   },
   
